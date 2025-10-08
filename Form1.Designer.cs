@@ -15,6 +15,7 @@ namespace MyWinFormsApp
 
         private System.ComponentModel.IContainer components = null;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label totalLabel;
 
         private System.Windows.Forms.DataGridView dataGridViewPay;
@@ -22,7 +23,18 @@ namespace MyWinFormsApp
         private System.Windows.Forms.DataGridView dataGridViewSalarys;
         private System.Windows.Forms.GroupBox groupBoxPay;
         private System.Windows.Forms.GroupBox groupBoxEmployees;
+        private System.Windows.Forms.GroupBox groupBoxAddItem;
         private System.Windows.Forms.Label employeeDetailsLabel;
+
+        private System.Windows.Forms.TextBox txtName;
+        private System.Windows.Forms.TextBox txtSurname;
+        private System.Windows.Forms.TextBox txtAmount;
+        private System.Windows.Forms.ComboBox cmbMonth;
+
+        private System.Windows.Forms.Label lblName;
+        private System.Windows.Forms.Label lblSurname;
+        private System.Windows.Forms.Label lblAmount;
+        private System.Windows.Forms.Label lblMonth;
 
         protected override void Dispose(bool disposing)
         {
@@ -37,11 +49,13 @@ namespace MyWinFormsApp
         {
             // 4) Имеет GUI с кнопкой запуска программы и отображением списка всех Employee и сумму всех выплат (amount) по месяцам (mount).            
             this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.dataGridViewPay = new System.Windows.Forms.DataGridView();
             this.dataGridViewEmployees = new System.Windows.Forms.DataGridView();
             this.dataGridViewSalarys = new System.Windows.Forms.DataGridView();
             this.groupBoxPay = new System.Windows.Forms.GroupBox();
             this.groupBoxEmployees = new System.Windows.Forms.GroupBox();
+            this.groupBoxAddItem = new System.Windows.Forms.GroupBox();
             this.totalLabel = new System.Windows.Forms.Label();
             this.employeeDetailsLabel = new System.Windows.Forms.Label();
 
@@ -71,7 +85,7 @@ namespace MyWinFormsApp
             this.groupBoxPay.Controls.Add(this.dataGridViewPay);
             this.groupBoxPay.Controls.Add(this.totalLabel);
 
-this.groupBoxEmployees.Location = new System.Drawing.Point(440, 60);
+            this.groupBoxEmployees.Location = new System.Drawing.Point(440, 60);
             this.groupBoxEmployees.Size = new System.Drawing.Size(370, 460);
             this.groupBoxEmployees.Text = "Результат XSLT-преобразования (Employees)";
             this.groupBoxEmployees.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
@@ -102,11 +116,43 @@ this.groupBoxEmployees.Location = new System.Drawing.Point(440, 60);
 
             //---------------------------------------------------------------
 
+            this.txtName = new TextBox { Location = new System.Drawing.Point(100, 20), Width = 150 };
+            this.txtSurname = new TextBox { Location = new System.Drawing.Point(100, 50), Width = 150 };
+            this.txtAmount = new TextBox { Location = new System.Drawing.Point(100, 80), Width = 150 };
+
+            this.cmbMonth = new ComboBox
+            {
+                Location = new System.Drawing.Point(100, 110),
+                Width = 150,
+                DropDownStyle = ComboBoxStyle.DropDownList
+            };
+            this.cmbMonth.Items.AddRange(new[] { "january", "february", "march", "april", "may", "june",
+                                       "july", "august", "september", "october", "november", "december" });
+
+            this.button2.Location = new System.Drawing.Point(100, 150);
+            this.button2.Size = new System.Drawing.Size(150, 40);
+            this.button2.Text = "Добавить";
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+
+            this.lblName = new Label { Location = new System.Drawing.Point(10, 22), Width = 150, Text = "Имя" };
+            this.lblSurname = new Label { Location = new System.Drawing.Point(10, 52), Width = 150, Text = "Фамилия" };
+            this.lblAmount = new Label { Location = new System.Drawing.Point(10, 82), Width = 150, Text = "Сумма" };
+            this.lblMonth = new Label { Location = new System.Drawing.Point(10, 112), Width = 150, Text = "Месяц" };
+
+            this.groupBoxAddItem.Location = new System.Drawing.Point(10, 320);
+            this.groupBoxAddItem.Size = new System.Drawing.Size(420, 200);
+            this.groupBoxAddItem.Text = "Добавить Item в Data1.xml";
+            this.groupBoxAddItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.groupBoxAddItem.Controls.AddRange(new Control[] { txtName, txtSurname, txtAmount, cmbMonth, button2, lblName, lblSurname, lblAmount, lblMonth });
+            this.groupBoxAddItem.Enabled = false;
+
+
             this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBoxPay);
+            this.Controls.Add(this.groupBoxAddItem);
             this.Controls.Add(this.groupBoxEmployees);
 
-            this.ClientSize = new System.Drawing.Size(850, 600);
+            this.ClientSize = new System.Drawing.Size(850, 550);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Text = "XSLT-преобразование";
 
@@ -150,10 +196,83 @@ this.groupBoxEmployees.Location = new System.Drawing.Point(440, 60);
 
             SaveEmployeesToXml(employeesData, "Employees.xml");
 
+            this.groupBoxAddItem.Enabled = true;
+
             MessageBox.Show("Данные успешно преобразованы!", "Успех");
         }
 
-private void dataGridViewEmployees_SelectionChanged(object sender, EventArgs e)
+        // 5) * (НЕ ОБЯЗАТЕЛЬНЫЙ ПУНКТ) Реализовать добавление в файл Data1.xml данных для строки item с возможность пересчета всех данных (с 1 по 4 пункты).
+        private void button2_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtName.Text))
+                {
+                    MessageBox.Show("Введите имя сотрудника", "Ошибка");
+                    txtName.Focus();
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(txtSurname.Text))
+                {
+                    MessageBox.Show("Введите фамилию сотрудника", "Ошибка");
+                    txtSurname.Focus();
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(txtAmount.Text))
+                {
+                    MessageBox.Show("Введите сумму зарплаты", "Ошибка");
+                    txtAmount.Focus();
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(cmbMonth.Text))
+                {
+                    MessageBox.Show("Выберите месяц", "Ошибка");
+                    cmbMonth.Focus();
+                    return;
+                }
+
+                if (!decimal.TryParse(txtAmount.Text, out decimal amount))
+                {
+                    MessageBox.Show("Сумма должна быть числом", "Ошибка");
+                    txtAmount.Focus();
+                    txtAmount.SelectAll();
+                    return;
+                }
+
+                if (amount <= 0)
+                {
+                    MessageBox.Show("Сумма должна быть положительным числом", "Ошибка");
+                    txtAmount.Focus();
+                    txtAmount.SelectAll();
+                    return;
+                }
+
+                PayItem newItem = new PayItem
+                {
+                    Name = txtName.Text.Trim(),
+                    Surname = txtSurname.Text.Trim(),
+                    AmountString = amount.ToString("F2"),
+                    Month = cmbMonth.Text
+                };
+
+                payData.Items.Add(newItem);
+
+                payData.TotalAmount = payData.Items.Sum(item => item.Amount);
+
+                SavePaysToXml(payData, "Data1.xml");
+
+                MessageBox.Show("Данные успешно добавлены!", "Успех");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка при добавлении: {ex.Message}", "Ошибка");
+            }
+        }
+        private void dataGridViewEmployees_SelectionChanged(object sender, EventArgs e)
         {
             if (dataGridViewEmployees.CurrentRow != null &&
                 dataGridViewEmployees.CurrentRow.DataBoundItem != null &&
