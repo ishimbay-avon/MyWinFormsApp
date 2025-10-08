@@ -18,7 +18,11 @@ namespace MyWinFormsApp
         private System.Windows.Forms.Label totalLabel;
 
         private System.Windows.Forms.DataGridView dataGridViewPay;
+        private System.Windows.Forms.DataGridView dataGridViewEmployees;
+        private System.Windows.Forms.DataGridView dataGridViewSalarys;
         private System.Windows.Forms.GroupBox groupBoxPay;
+        private System.Windows.Forms.GroupBox groupBoxEmployees;
+        private System.Windows.Forms.Label employeeDetailsLabel;
 
         protected override void Dispose(bool disposing)
         {
@@ -34,8 +38,12 @@ namespace MyWinFormsApp
             // 4) Имеет GUI с кнопкой запуска программы и отображением списка всех Employee и сумму всех выплат (amount) по месяцам (mount).            
             this.button1 = new System.Windows.Forms.Button();
             this.dataGridViewPay = new System.Windows.Forms.DataGridView();
+            this.dataGridViewEmployees = new System.Windows.Forms.DataGridView();
+            this.dataGridViewSalarys = new System.Windows.Forms.DataGridView();
             this.groupBoxPay = new System.Windows.Forms.GroupBox();
+            this.groupBoxEmployees = new System.Windows.Forms.GroupBox();
             this.totalLabel = new System.Windows.Forms.Label();
+            this.employeeDetailsLabel = new System.Windows.Forms.Label();
 
             this.SuspendLayout();
 
@@ -63,12 +71,42 @@ namespace MyWinFormsApp
             this.groupBoxPay.Controls.Add(this.dataGridViewPay);
             this.groupBoxPay.Controls.Add(this.totalLabel);
 
+this.groupBoxEmployees.Location = new System.Drawing.Point(440, 60);
+            this.groupBoxEmployees.Size = new System.Drawing.Size(370, 460);
+            this.groupBoxEmployees.Text = "Результат XSLT-преобразования (Employees)";
+            this.groupBoxEmployees.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+
+            this.dataGridViewEmployees.Location = new System.Drawing.Point(10, 25);
+            this.dataGridViewEmployees.Size = new System.Drawing.Size(350, 185);
+            this.dataGridViewEmployees.ReadOnly = true;
+            this.dataGridViewEmployees.AllowUserToAddRows = false;
+            this.dataGridViewEmployees.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            this.dataGridViewEmployees.SelectionChanged += new EventHandler(this.dataGridViewEmployees_SelectionChanged);
+            this.groupBoxEmployees.Controls.Add(this.dataGridViewEmployees);
+
+
+            this.employeeDetailsLabel.Location = new System.Drawing.Point(10, 225);
+            this.employeeDetailsLabel.Size = new System.Drawing.Size(420, 30);
+            this.employeeDetailsLabel.Text = "Зарплаты выбранного сотрудника";
+            this.employeeDetailsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.employeeDetailsLabel.ForeColor = Color.DarkGreen;
+            this.groupBoxEmployees.Controls.Add(this.employeeDetailsLabel);
+
+            this.dataGridViewSalarys.Location = new System.Drawing.Point(10, 255);
+            this.dataGridViewSalarys.Size = new System.Drawing.Size(350, 185);
+            this.dataGridViewSalarys.ReadOnly = true;
+            this.dataGridViewSalarys.AllowUserToAddRows = false;
+            this.dataGridViewSalarys.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            this.dataGridViewSalarys.DataSource = null;
+            this.groupBoxEmployees.Controls.Add(this.dataGridViewSalarys);
+
             //---------------------------------------------------------------
 
             this.Controls.Add(this.button1);
             this.Controls.Add(this.groupBoxPay);
+            this.Controls.Add(this.groupBoxEmployees);
 
-            this.ClientSize = new System.Drawing.Size(800, 600);
+            this.ClientSize = new System.Drawing.Size(850, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Text = "XSLT-преобразование";
 
@@ -102,9 +140,52 @@ namespace MyWinFormsApp
 
             employeesData = GroupPayToEmployees(payData);
 
+            var employeesDisplay = employeesData.EmployeeList.Select(emp => new
+            {
+                Имя = emp.Name,
+                Фамилия = emp.Surname
+            }).ToList();
+
+            dataGridViewEmployees.DataSource = employeesDisplay;
+
             SaveEmployeesToXml(employeesData, "Employees.xml");
 
             MessageBox.Show("Данные успешно преобразованы!", "Успех");
+        }
+
+private void dataGridViewEmployees_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dataGridViewEmployees.CurrentRow != null &&
+                dataGridViewEmployees.CurrentRow.DataBoundItem != null &&
+                employeesData != null)
+            {
+                var selectedEmployee = dataGridViewEmployees.CurrentRow.DataBoundItem;
+                var nameProperty = selectedEmployee.GetType().GetProperty("Имя");
+                var surnameProperty = selectedEmployee.GetType().GetProperty("Фамилия");
+
+                if (nameProperty != null && surnameProperty != null)
+                {
+                    string name = nameProperty.GetValue(selectedEmployee)?.ToString() ?? "";
+                    string surname = surnameProperty.GetValue(selectedEmployee)?.ToString() ?? "";
+
+                    var employee = employeesData.EmployeeList
+                        .FirstOrDefault(emp => emp.Name == name && emp.Surname == surname);
+
+                    if (employee != null)
+                    {
+                        var salaryDisplay = employee.Salaries.Select(salary => new
+                        {
+                            Месяц = salary.Month,
+                            Сумма = salary.Amount
+                        }).ToList();
+
+                        dataGridViewSalarys.DataSource = salaryDisplay;
+
+                        // Обновляем заголовок GroupBox
+                        employeeDetailsLabel.Text = $"Зарплаты: {name} {surname}";
+                    }
+                }
+            }
         }
 
         public Pay LoadPayFromXml(string filePath)
