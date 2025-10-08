@@ -15,6 +15,7 @@ namespace MyWinFormsApp
 
         private System.ComponentModel.IContainer components = null;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label totalLabel;
 
         private System.Windows.Forms.DataGridView dataGridViewPay;
         private System.Windows.Forms.GroupBox groupBoxPay;
@@ -34,6 +35,7 @@ namespace MyWinFormsApp
             this.button1 = new System.Windows.Forms.Button();
             this.dataGridViewPay = new System.Windows.Forms.DataGridView();
             this.groupBoxPay = new System.Windows.Forms.GroupBox();
+            this.totalLabel = new System.Windows.Forms.Label();
 
             this.SuspendLayout();
 
@@ -43,9 +45,15 @@ namespace MyWinFormsApp
             this.button1.Click += new System.EventHandler(this.button1_Click);
 
             this.groupBoxPay.Location = new System.Drawing.Point(10, 60);
-            this.groupBoxPay.Size = new System.Drawing.Size(420, 240);
+            this.groupBoxPay.Size = new System.Drawing.Size(420, 260);
             this.groupBoxPay.Text = "Данные из Data1.xml";
             this.groupBoxPay.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+
+            this.totalLabel.Name = "totalAmountLabel";
+            this.totalLabel.Location = new System.Drawing.Point(10, 230);
+            this.totalLabel.Size = new System.Drawing.Size(400, 30);
+            this.totalLabel.Font = new Font("Microsoft Sans Serif", 10F, FontStyle.Bold);
+            this.totalLabel.ForeColor = Color.DarkGreen;
 
             this.dataGridViewPay.Location = new System.Drawing.Point(10, 25);
             this.dataGridViewPay.Size = new System.Drawing.Size(400, 190);
@@ -53,6 +61,7 @@ namespace MyWinFormsApp
             this.dataGridViewPay.AllowUserToAddRows = false;
             this.dataGridViewPay.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             this.groupBoxPay.Controls.Add(this.dataGridViewPay);
+            this.groupBoxPay.Controls.Add(this.totalLabel);
 
             //---------------------------------------------------------------
 
@@ -71,6 +80,10 @@ namespace MyWinFormsApp
         {
             payData = LoadPayFromXml("Data1.xml");
 
+            decimal totalAmount = payData.Items.Sum(item => item.Amount);
+            // 3) В исходный файл Data1.xml в элемент Pay дописывает атрибут, который отражает сумму всех amount
+            payData.TotalAmount = totalAmount;
+
             var displayData = payData.Items.Select(item => new
             {
                 Имя = item.Name,
@@ -80,7 +93,11 @@ namespace MyWinFormsApp
             }).ToList();
 
             dataGridViewPay.DataSource = displayData;
-          
+
+            totalLabel.Text = $"Общая сумма всех выплат: {totalAmount:F2} руб.";
+
+            SavePaysToXml(payData, "Data1.xml");
+
             //-----------------------------------------------------------------
 
             employeesData = GroupPayToEmployees(payData);
@@ -142,6 +159,24 @@ namespace MyWinFormsApp
             }
         }
 
+        public void SavePaysToXml(Pay pays, string filePath)
+        {
+            XmlSerializer serializer = new XmlSerializer(typeof(Pay));
+
+            XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
+            ns.Add("", "");
+
+            var settings = new XmlWriterSettings
+            {
+                Indent = true,
+                Encoding = System.Text.Encoding.UTF8
+            };
+
+            using (var writer = XmlWriter.Create(filePath, settings))
+            {
+                serializer.Serialize(writer, pays, ns);
+            }
+        }
 
     }
 }
